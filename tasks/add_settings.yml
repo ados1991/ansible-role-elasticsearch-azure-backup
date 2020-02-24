@@ -1,0 +1,16 @@
+
+- name: "Add settings to {{ elasticsearch_conf_dir }}/elasticsearch.yml"
+  become: yes
+  blockinfile:
+    path: "{{ elasticsearch_conf_dir }}/elasticsearch.yml"
+    backup: yes
+    block: |
+      {% for client, client_value in elasticsearch_azure.client.items() %}
+      {% for key, value in client_value.items() %}
+      {% if key not in ['account', 'key', 'sas_token'] %}
+      azure.client.{{client}}.{{key}}: {{value}}
+      {% endif %}
+      {% endfor %}
+      {% endfor %}
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR AZURE BACKUP CONFIG. DON'T TOUCH"
+  notify: "restart elasticsearch service"

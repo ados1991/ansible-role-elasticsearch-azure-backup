@@ -1,0 +1,10 @@
+---
+- name: "Delete azure backup {{ elasticsearch_azure_backup_name }}"
+  uri:
+    method: DELETE
+    url: "{{ elasticsearch_api_url }}/_snapshot/{{ elasticsearch_azure_backup_name }}"
+    validate_certs: "{{ elasticsearch_validate_certs }}"
+  register: result
+  failed_when: >
+    result.status != 200
+  run_once: true

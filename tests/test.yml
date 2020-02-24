@@ -1,0 +1,13 @@
+---
+- hosts: all
+  remote_user: vagrant
+  max_fail_percentage: 50
+  serial: "50%"
+  vars:
+    elasticsearch_azure:
+      client:
+        client_1:
+          account: toto1
+          key: toto # use ansible vault key for sensitive secret
+  roles:
+    - ansible-role-elasticsearch-azure-backup

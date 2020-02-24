@@ -1,0 +1,45 @@
+---
+- name: Check mandatory variables are defined
+  assert:
+    that:
+      - elasticsearch_azure is defined
+
+- name: Install plugin repository-azure
+  become: true
+  elasticsearch_plugin:
+    name: repository-azure
+    state: present
+    force: yes
+    plugin_bin: "{{ elastisearch_plugin_bin }}"
+  notify: "restart elasticsearch service"
+
+- name: Force a restart if one of plugins is newly installed.
+  meta: flush_handlers
+
+- name: Check if clients configuration are correctly defined
+  assert:
+    that:
+      - "item.value.account is defined"
+      - "item.value.key is defined"
+    fail_msg: "elasticsearch_azure.client.{{item.key}} is not properly defined, you must at least provide account and key properties"
+  with_dict: "{{ elasticsearch_azure.client }}"
+  no_log: True
+
+- name: Create the elasticsearch keystore
+  block:
+  - name: create the keystore if it doesn't exist yet
+    become: true
+    become_user: "{{ elasticsearch_user }}"
+    command: >
+     {{elasticsearch_home}}/bin/elasticsearch-keystore create
+    args:
+      creates: "{{ elasticsearch_conf_dir }}/elasticsearch.keystore"
+    environment:
+      ES_PATH_CONF: "{{ elasticsearch_conf_dir }}"
+
+  - include: add_secure_settings.yml
+    with_dict: "{{ elasticsearch_azure.client }}"
+    loop_control:
+      loop_var: azure_client
+
+  - include: add_settings.yml

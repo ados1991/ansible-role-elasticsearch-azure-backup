@@ -1,0 +1,32 @@
+---
+# this task will set the secrets settings in elasticseach keystore
+# When we define more than one account, the task will be performed as below
+# Eg: two accounts defauft and primary
+#   elasticsearch-keystore add azure.client.default.account value
+#   elasticsearch-keystore add azure.client.default.key value
+#   elasticsearch-keystore add azure.client.secondary.account value
+#   elasticsearch-keystore add azure.client.secondary.sas_token value
+
+- name: Add secure settings for azure repository backup
+  become: true
+  shell: sudo -u {{ elasticsearch_user }} -s echo "{{ azure_client.value[item] }}" | {{ elasticsearch_home }}/bin/elasticsearch-keystore add -f -x 'azure.client.{{ azure_client.key }}.{{ item }}'
+  # shell: echo azure.client.{{azure_client.key}}.{{item}}  {{azure_client.value[item]}}
+  environment:
+    ES_PATH_CONF: "{{ elasticsearch_conf_dir }}"
+  with_items:
+    - account
+    - key
+    - sas_token
+  when: azure_client.value[item] is defined
+  no_log: True
+
+- name: "Reload secure settings"
+  uri:
+    method: POST
+    url: "{{ elasticsearch_api_url }}/_nodes/reload_secure_settings"
+    return_content: yes
+    validate_certs: "{{ elasticsearch_validate_certs }}"
+  register: result
+  failed_when: >
+    result.status != 200
+  run_once: true

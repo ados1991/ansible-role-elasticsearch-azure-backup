@@ -1,0 +1,46 @@
+---
+
+- name: restart elasticsearch service
+  debug: msg="Rolling restart of node {{ansible_hostname}}-{{ elasticsearch_service }} initiated"
+  listen: "restart elasticsearch service"
+
+- name: Turn off shard reallocation
+  shell: "curl -XPUT -H 'Content-Type: application/json' {{ elasticsearch_api_url }}/_cluster/settings -d '{\"transient\" : {\"cluster.routing.allocation.enable\" : \"none\" }}'"
+  register: response
+  failed_when: response.stdout.find('"acknowledged":true') == -1
+  listen: "restart elasticsearch service"
+
+- name: Restart the elasticsearch service
+  service:
+    name: "{{ elasticsearch_service }}"
+    state: restarted
+  become: True
+  listen: "restart elasticsearch service"
+
+- name: Get ip of node
+  set_fact:
+    node_ip: '{{ hostvars[inventory_hostname]["ansible_" + elasticsearch_network_interface]["ipv4"]["address"] }}'
+  listen: "restart elasticsearch service"
+
+# Wait for Elasticsearch node to come back into cluster
+- name: "wait node {{ansible_hostname}} to come back into cluster"
+  shell: "curl -s -m 2 -H 'Content-Type: application/json' 'localhost:9200/_cat/nodes?h=ip' | tr -d ' ' | grep -E '^{{ node_ip }}$' "
+  register: result
+  until: result.rc == 0
+  retries: 200
+  delay: 3
+  listen: "restart elasticsearch service"
+
+- name: Turn on shard allocation
+  shell: "curl -XPUT -H 'Content-Type: application/json' {{ elasticsearch_api_url }}/_cluster/settings -d '{\"transient\" : {\"cluster.routing.allocation.enable\" : \"all\" }}'"
+  register: response
+  failed_when: response.stdout.find('"acknowledged":true') == -1
+  listen: "restart elasticsearch service"
+
+- name: Wait until cluster status is green
+  shell: "curl -XGET -H 'Content-Type: application/json' {{ elasticsearch_api_url }}/_cluster/health"
+  register: response
+  until: response.stdout.find('"status":"green"') != -1
+  retries: 200
+  delay: 3
+  listen: "restart elasticsearch service"

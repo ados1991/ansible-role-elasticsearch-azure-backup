@@ -1,0 +1,17 @@
+---
+- name: "Create azure backup {{ elasticsearch_azure_backup_name }}"
+  uri:
+    method: PUT
+    url: "{{ elasticsearch_api_url }}/_snapshot/{{ elasticsearch_azure_backup_name }}"
+    body_format: json
+    body: "{{ elasticsearch_azure_backup_config }}"
+    return_content: yes
+    validate_certs: "{{ elasticsearch_validate_certs }}"
+  register: result
+  failed_when: >
+    result.status != 200
+  run_once: true
+
+- name: Request's content
+  debug: msg={{ result }}
+  run_once: true

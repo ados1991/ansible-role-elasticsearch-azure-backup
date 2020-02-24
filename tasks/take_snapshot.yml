@@ -1,0 +1,21 @@
+---
+- name: "Create a snapshot {{ elasticsearch_azure_snapshot }} on backup {{ elasticsearch_azure_backup_name }}"
+  uri:
+    method: PUT
+    url: "{{ elasticsearch_api_url }}/_snapshot/{{ elasticsearch_azure_backup_name }}/{{ elasticsearch_azure_snapshot }}"
+    body_format: json
+    body: "{{ elasticsearch_azure_snapshot_config }}"
+    return_content: yes
+    validate_certs: "{{ elasticsearch_validate_certs }}"
+  register: result
+  failed_when: >
+    result.status != 200
+  run_once: true
+
+- name: A snapshot call is an asyncronus operation, below details of operation, when the snapshot has completed, its state should be SUCCESS.
+  debug: msg={{ result }}
+  run_once: true
+
+- name: Command to get the status of snapshot call
+  debug: msg="GET /_snapshot/{{ elasticsearch_azure_backup_name }}/{{ elasticsearch_azure_snapshot }}/_status"
+  run_once: true

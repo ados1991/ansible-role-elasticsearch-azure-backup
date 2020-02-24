@@ -1,0 +1,22 @@
+# defaults file
+
+# Location of the plugin binary. If this file is not found, the default plugin binaries will be used.
+# elastisearch_plugin_bin: "/usr/share/elasticsearch/bin"
+
+# azure.client.default.proxy.port
+
+elasticsearch_conf_dir: "/etc/elasticsearch"
+elasticsearch_home: "/usr/share/elasticsearch"
+elastisearch_plugin_bin: "{{elasticsearch_home}}/bin/elasticsearch-plugin"
+
+elasticsearch_service: "elasticsearch"
+elasticsearch_user: "elasticsearch"
+elasticsearch_group: "elasticsearch"
+
+elasticsearch_api_scheme: "http"
+# this is the network interface whose ip will be used to check the come back of node in cluster
+elasticsearch_network_interface: "eth0"
+elasticsearch_api_host: "localhost"
+elasticsearch_api_port: 9200
+elasticsearch_api_url: "{{ elasticsearch_api_scheme }}://{{ elasticsearch_api_host }}:{{ elasticsearch_api_port }}"
+elasticsearch_validate_certs: "no"

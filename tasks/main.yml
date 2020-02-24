@@ -1,0 +1,12 @@
+---
+- include: install.yml
+  when: action is undefined or action not in ['create_backup', 'delete_backup', 'take_snapshot']
+
+- include: create_backup.yml
+  when: action is defined and action == 'create_backup'
+
+- include: delete_backup.yml
+  when: action is defined and action == 'delete_backup'
+
+- include: take_snapshot.yml
+  when: action is defined and action == 'take_snapshot'
